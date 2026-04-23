@@ -31,7 +31,7 @@ export default function StressRadar({ score, isActive }: StressRadarProps) {
   }
 
   return (
-    <div className="w-full glass-card rounded-2xl p-6 border border-white/10 relative overflow-hidden">
+    <div className="w-full glass-card rounded-2xl p-6 border border-slate-200 relative overflow-hidden">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
           <Activity className={`w-5 h-5 ${textColor}`} />
@@ -39,7 +39,7 @@ export default function StressRadar({ score, isActive }: StressRadarProps) {
         </div>
         <div className="flex items-center gap-2">
           {isActive && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>}
-          <span className="text-xs text-gray-400 font-medium tracking-wide uppercase">Live Analysis</span>
+          <span className="text-xs text-slate-500 font-medium tracking-wide uppercase">Live Analysis</span>
         </div>
       </div>
 
@@ -52,12 +52,12 @@ export default function StressRadar({ score, isActive }: StressRadarProps) {
           <div className={`text-sm font-bold uppercase tracking-wider ${textColor}`}>
             {status}
           </div>
-          <div className="text-xs text-gray-500">Composite Score / 100</div>
+          <div className="text-xs text-slate-400">Composite Score / 100</div>
         </div>
       </div>
 
       {/* Visual Bar */}
-      <div className="relative h-4 bg-white/5 rounded-full overflow-hidden">
+      <div className="relative h-4 bg-slate-100 rounded-full overflow-hidden">
         {/* Markers */}
         <div className="absolute top-0 bottom-0 left-[30%] w-px bg-white/20 z-10" />
         <div className="absolute top-0 bottom-0 left-[60%] w-px bg-white/20 z-10" />
@@ -71,7 +71,7 @@ export default function StressRadar({ score, isActive }: StressRadarProps) {
         />
       </div>
 
-      <div className="flex justify-between mt-2 text-[10px] text-gray-500 font-medium px-1">
+      <div className="flex justify-between mt-2 text-[10px] text-slate-400 font-medium px-1">
         <span>0</span>
         <span>Low</span>
         <span>Mod</span>

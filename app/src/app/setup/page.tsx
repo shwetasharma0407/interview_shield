@@ -33,7 +33,7 @@ export default function SetupPage() {
   };
 
   return (
-    <main className="flex-1 flex flex-col relative min-h-screen bg-[#0f1117] text-white overflow-hidden p-6">
+    <main className="flex-1 flex flex-col relative min-h-screen  text-slate-800 overflow-hidden p-6">
       {/* Background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]" />
@@ -46,7 +46,7 @@ export default function SetupPage() {
           </div>
           <span className="text-lg font-bold tracking-tight">InterviewShield</span>
         </Link>
-        <div className="text-sm text-gray-400 font-medium">Session Setup</div>
+        <div className="text-sm text-slate-500 font-medium">Session Setup</div>
       </header>
 
       <div className="flex-1 w-full max-w-2xl mx-auto z-10 flex flex-col justify-center pb-20">
@@ -59,18 +59,18 @@ export default function SetupPage() {
           >
             <div>
               <h2 className="text-3xl font-bold mb-2">Configure your session</h2>
-              <p className="text-gray-400">Select your target role and seniority to generate relevant questions.</p>
+              <p className="text-slate-500">Select your target role and seniority to generate relevant questions.</p>
             </div>
 
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Target Role</label>
+                <label className="text-sm font-semibold text-slate-600 uppercase tracking-wider">Target Role</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {roles.map(r => (
                     <button 
                       key={r}
                       onClick={() => setRole(r)}
-                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${role === r ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${role === r ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'}`}
                     >
                       {r}
                     </button>
@@ -79,13 +79,13 @@ export default function SetupPage() {
               </div>
 
               <div className="flex flex-col gap-3 mt-4">
-                <label className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Seniority Level</label>
+                <label className="text-sm font-semibold text-slate-600 uppercase tracking-wider">Seniority Level</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {levels.map(l => (
                     <button 
                       key={l}
                       onClick={() => setLevel(l)}
-                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${level === l ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${level === l ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'}`}
                     >
                       {l}
                     </button>
@@ -113,15 +113,15 @@ export default function SetupPage() {
           >
             <div>
               <h2 className="text-3xl font-bold mb-2">Microphone Check</h2>
-              <p className="text-gray-400">InterviewShield needs your microphone to analyze physiological stress signals in your voice.</p>
+              <p className="text-slate-500">InterviewShield needs your microphone to analyze physiological stress signals in your voice.</p>
             </div>
 
-            <div className="glass-card rounded-2xl p-8 flex flex-col items-center justify-center gap-6 border border-white/10">
-              <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${micStatus === 'idle' ? 'bg-white/5' : micStatus === 'testing' ? 'bg-indigo-500/20 animate-pulse-ring' : 'bg-emerald-500/20'}`}>
+            <div className="glass-card rounded-2xl p-8 flex flex-col items-center justify-center gap-6 border border-slate-200">
+              <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${micStatus === 'idle' ? 'bg-slate-100' : micStatus === 'testing' ? 'bg-indigo-100 animate-pulse-ring' : 'bg-emerald-500/20'}`}>
                 {micStatus === 'ready' ? (
                   <CheckCircle2 className="w-10 h-10 text-emerald-400" />
                 ) : (
-                  <Mic className={`w-10 h-10 ${micStatus === 'testing' ? 'text-indigo-400' : 'text-gray-400'}`} />
+                  <Mic className={`w-10 h-10 ${micStatus === 'testing' ? 'text-indigo-400' : 'text-slate-500'}`} />
                 )}
               </div>
 
@@ -129,7 +129,7 @@ export default function SetupPage() {
                 <h3 className="font-semibold text-lg mb-1">
                   {micStatus === 'idle' ? 'Test your microphone' : micStatus === 'testing' ? 'Calibrating baseline...' : 'Microphone Ready'}
                 </h3>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-slate-500">
                   {micStatus === 'idle' ? 'Click below to allow access and test levels.' : micStatus === 'testing' ? 'Please say something for 3 seconds.' : 'Voice captured clearly. No background noise detected.'}
                 </p>
               </div>
@@ -137,7 +137,7 @@ export default function SetupPage() {
               {micStatus === 'idle' && (
                 <button 
                   onClick={handleMicTest}
-                  className="bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-800 px-6 py-2 rounded-lg font-medium transition-colors"
                 >
                   Test Microphone
                 </button>
@@ -147,14 +147,14 @@ export default function SetupPage() {
             <div className="flex justify-between mt-8">
               <button 
                 onClick={() => setStep(1)}
-                className="px-6 py-3 text-gray-400 hover:text-white font-medium transition-colors"
+                className="px-6 py-3 text-slate-500 hover:text-slate-800 font-medium transition-colors"
               >
                 Back
               </button>
               <button 
                 onClick={handleStart}
                 disabled={micStatus !== 'ready'}
-                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${micStatus === 'ready' ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-white/5 text-gray-500 cursor-not-allowed'}`}
+                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${micStatus === 'ready' ? 'bg-emerald-600 hover:bg-emerald-500 text-slate-800' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
               >
                 Start Interview Session
               </button>

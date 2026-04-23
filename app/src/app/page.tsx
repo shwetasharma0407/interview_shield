@@ -13,18 +13,18 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/20 rounded-full blur-[120px] pointer-events-none" />
       
       {/* Header */}
-      <header className="w-full p-6 flex justify-between items-center z-10 border-b border-white/5 bg-[#0f1117]/80 backdrop-blur-md">
+      <header className="w-full p-6 flex justify-between items-center z-10 border-b border-indigo-100 bg-white/60 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Shield className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight">InterviewShield</span>
+          <span className="text-xl font-bold tracking-tight text-slate-800">InterviewShield</span>
         </div>
-        <nav className="flex items-center gap-6 text-sm font-medium text-gray-300">
-          <Link href="/" className="hover:text-white text-white transition-colors">Dashboard</Link>
-          <Link href="/progress" className="hover:text-white transition-colors">Progress</Link>
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors">
-            <span className="text-xs">JS</span>
+        <nav className="flex items-center gap-6 text-sm font-medium text-slate-600">
+          <Link href="/" className="hover:text-indigo-600 transition-colors">Dashboard</Link>
+          <Link href="/progress" className="hover:text-indigo-600 transition-colors">Progress</Link>
+          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center cursor-pointer hover:bg-indigo-200 transition-colors">
+            <span className="text-xs text-indigo-700 font-bold">JS</span>
           </div>
         </nav>
       </header>
@@ -40,30 +40,30 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             className="flex flex-col gap-6"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-sm font-medium w-fit border border-indigo-500/20">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-600 text-sm font-semibold w-fit border border-indigo-200">
               <Activity className="w-4 h-4" />
-              <span>Real-time physiological feedback</span>
+              <span>Real-time AI Coaching & Analysis</span>
             </div>
             
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1]">
-              Master your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">nerves.</span><br />
+            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] text-slate-800">
+              Master your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">nerves.</span><br />
               Nail the interview.
             </h1>
             
-            <p className="text-lg text-gray-400 leading-relaxed max-w-xl">
-              InterviewShield is an AI practice coach that detects stress in your voice in real-time, providing immediate corrective feedback before the real interview.
+            <p className="text-lg text-slate-600 leading-relaxed max-w-xl font-medium">
+              InterviewShield V2.0 analyzes your speech, tracks filler words, monitors your pacing, and watches your expressions to provide real-time coaching.
             </p>
 
             <div className="flex items-center gap-4 mt-4">
               <Link href="/setup">
-                <button className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-all hover:scale-105 active:scale-95">
+                <button className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95">
                   <Play className="w-5 h-5 fill-current" />
                   Start Practice Session
                 </button>
               </Link>
-              <button className="flex items-center gap-2 bg-white/5 border border-white/10 px-6 py-3 rounded-xl font-medium hover:bg-white/10 transition-all">
-                <Settings className="w-5 h-5 text-gray-400" />
-                Configure Mic
+              <button className="flex items-center gap-2 bg-white border border-slate-200 px-6 py-3 rounded-xl font-medium hover:bg-slate-50 transition-all text-slate-700 shadow-sm">
+                <Settings className="w-5 h-5 text-slate-400" />
+                Configure Mic & Cam
               </button>
             </div>
           </motion.div>
@@ -76,13 +76,13 @@ export default function Home() {
             className="relative"
           >
             <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
-              <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+              <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-4">
                 <div>
-                  <h3 className="font-semibold text-lg">Stress Radar</h3>
-                  <p className="text-xs text-gray-400">Live Voice Analysis</p>
+                  <h3 className="font-semibold text-lg text-slate-800">Live Feedback</h3>
+                  <p className="text-xs text-slate-500 font-medium">Speech & Expression Analysis</p>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 text-sm font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Listening
                 </div>
               </div>
@@ -97,20 +97,20 @@ export default function Home() {
                       key={i}
                       animate={{ height: [`${height}%`, `${height + (Math.random() * 20 - 10)}%`, `${height}%`] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.05 }}
-                      className={`flex-1 rounded-t-sm ${isStressed ? 'bg-orange-500' : 'bg-indigo-500'}`}
+                      className={`flex-1 rounded-t-sm ${isStressed ? 'bg-orange-400' : 'bg-indigo-400'}`}
                     />
                   )
                 })}
               </div>
 
-              <div className="mt-8 flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5">
+              <div className="mt-8 flex justify-between items-center bg-white/60 p-4 rounded-xl border border-slate-100 shadow-sm">
                 <div>
-                  <p className="text-sm text-gray-400">Current Score</p>
-                  <p className="text-3xl font-bold text-white">42<span className="text-sm text-gray-500 ml-1">/100</span></p>
+                  <p className="text-sm font-medium text-slate-500">Speaking Pace</p>
+                  <p className="text-3xl font-bold text-slate-800">125<span className="text-sm text-slate-500 ml-1">WPM</span></p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-400">Status</p>
-                  <p className="text-lg font-medium text-emerald-400">Optimal Range</p>
+                  <p className="text-sm font-medium text-slate-500">Status</p>
+                  <p className="text-lg font-bold text-emerald-500">Optimal Range</p>
                 </div>
               </div>
             </div>
@@ -119,14 +119,14 @@ export default function Home() {
             <motion.div 
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-6 -left-6 glass rounded-xl p-4 shadow-xl shadow-black/50 border border-white/10 flex items-center gap-4"
+              className="absolute -bottom-6 -left-6 bg-white/90 backdrop-blur-md rounded-xl p-4 shadow-xl shadow-slate-200/50 border border-slate-100 flex items-center gap-4"
             >
-              <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <Mic className="w-5 h-5 text-orange-400" />
+              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                <Mic className="w-5 h-5 text-orange-500" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Elevated Pitch Detected</p>
-                <p className="text-xs text-gray-400">Remember to breathe slowly.</p>
+                <p className="text-sm font-bold text-slate-800">Filler Word Detected</p>
+                <p className="text-xs font-medium text-slate-500">You said "um". Try to pause instead.</p>
               </div>
             </motion.div>
           </motion.div>
