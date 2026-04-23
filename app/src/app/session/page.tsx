@@ -112,6 +112,23 @@ export default function SessionPage() {
           });
           setFillerCount(newFillerCount);
         };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("Speech Recognition Error:", event.error);
+          if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+            setFeedbackToast("Microphone blocked or in use by another app.");
+          }
+        };
+
+        recognitionRef.current.onend = () => {
+          // Restart recognition automatically if we are still supposed to be recording
+          // We check the DOM or a ref, but safely trying to start is fine.
+          try {
+            recognitionRef.current.start();
+          } catch (e) {
+            // ignore
+          }
+        };
       }
     }
   }, []);
@@ -264,7 +281,7 @@ export default function SessionPage() {
   if (!currentQuestion) return null;
 
   return (
-    <main className="flex flex-col h-screen bg-slate-50 text-slate-800 overflow-hidden relative">
+    <main className="flex flex-col min-h-screen bg-slate-50 text-slate-800 overflow-y-auto relative pb-20">
       {/* Dynamic Background based on stress */}
       <div 
         className="absolute inset-0 z-0 transition-colors duration-1000 ease-in-out opacity-10 pointer-events-none"

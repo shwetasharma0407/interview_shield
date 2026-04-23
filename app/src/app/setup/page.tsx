@@ -30,17 +30,23 @@ export default function SetupPage() {
     setBackendStatus("connecting");
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-      const res = await fetch(`${backendUrl}/health`);
+      
+      // Force timeout after 3 seconds so user doesn't get stuck
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      
+      const res = await fetch(`${backendUrl}/health`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
       if (res.ok) {
         setBackendStatus("ready");
       } else {
-        setBackendStatus("idle");
+        setBackendStatus("ready"); // Still let them proceed even if non-200
       }
     } catch (e) {
-      console.error(e);
-      // Even if it fails, we let them proceed but they are warned. 
-      // For UX, let's just mark it ready after a long timeout if it's the free tier waking up.
-      setTimeout(() => setBackendStatus("ready"), 3000); 
+      console.error("Backend ping failed or timed out:", e);
+      // Let them proceed anyway so the app isn't blocked
+      setBackendStatus("ready");
     }
   };
 
