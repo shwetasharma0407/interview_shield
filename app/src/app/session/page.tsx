@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import { useInterviewStore } from "@/store/useInterviewStore";
 import StressRadar from "@/components/StressRadar";
 import BreathingReset from "@/components/BreathingReset";
-import { Mic, MicOff, Square, Play, Shield, Video, Type } from "lucide-react";
+import { Play, Shield, Type, Activity, Terminal } from "lucide-react";
 import Link from "next/link";
 import Webcam from "react-webcam";
 import * as faceapi from "face-api.js";
 
-// Add SpeechRecognition to Window
 declare global {
   interface Window {
     SpeechRecognition: any;
@@ -23,10 +22,10 @@ export default function SessionPage() {
   const { role, questions, currentQuestionIndex, nextQuestion, sessionActive, endSession, updateTranscript, updateMetrics, logExpression, saveInterviewToHistory } = useInterviewStore();
   
   const [isRecording, setIsRecording] = useState(false);
+  const [hasStartedQuestion, setHasStartedQuestion] = useState(false);
   const [stressScore, setStressScore] = useState(25);
   const [showBreathingReset, setShowBreathingReset] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
-  const [countdown, setCountdown] = useState(3);
   
   // V2.0 State
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -95,8 +94,8 @@ export default function SessionPage() {
               const wpm = Math.round(words.length / minutesPassed);
               setLiveWpm(wpm);
               
-              if (wpm > 160) setFeedbackToast("Speaking too fast. Slow down.");
-              else if (wpm < 100 && wpm > 0 && minutesPassed > 0.2) setFeedbackToast("Speaking a bit slow.");
+              if (wpm > 160) setFeedbackToast("WARN: Pacing Exceeds Target [>160 WPM]");
+              else if (wpm < 100 && wpm > 0 && minutesPassed > 0.2) setFeedbackToast("WARN: Pacing Below Target [<100 WPM]");
               else setFeedbackToast("");
             }
           }
@@ -107,7 +106,7 @@ export default function SessionPage() {
           words.forEach(word => {
             if (fillerWords.includes(word.toLowerCase())) {
               newFillerCount++;
-              setFeedbackToast(`Try to avoid saying "${word}". Pause instead.`);
+              setFeedbackToast(`ALERT: Filler Word [${word}] Detected`);
             }
           });
           setFillerCount(newFillerCount);
@@ -116,50 +115,45 @@ export default function SessionPage() {
         recognitionRef.current.onerror = (event: any) => {
           console.error("Speech Recognition Error:", event.error);
           if (event.error === 'not-allowed' || event.error === 'audio-capture') {
-            setFeedbackToast("Microphone blocked or in use by another app.");
+            setFeedbackToast("ERROR: Microphone hardware lock detected.");
           }
         };
 
         recognitionRef.current.onend = () => {
           // Restart recognition automatically if we are still supposed to be recording
-          // We check the DOM or a ref, but safely trying to start is fine.
           try {
-            recognitionRef.current.start();
+            if (isRecording) {
+               recognitionRef.current.start();
+            }
           } catch (e) {
             // ignore
           }
         };
       }
     }
-  }, []);
+  }, [isRecording]);
 
-  // Handle 3-2-1 Auto Start Countdown
-  useEffect(() => {
-    if (!sessionActive || sessionCompleted || showBreathingReset) return;
+  const handleStartRecording = () => {
+    setHasStartedQuestion(true);
+    setIsRecording(true);
     
-    setCountdown(3);
-    setIsRecording(false);
-    
-    // Clear previous transcript states
+    // Clear previous states
     setLiveTranscript("");
     setLiveWpm(0);
     setFillerCount(0);
     setFeedbackToast("");
     wordCountRef.current = 0;
     
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setIsRecording(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [currentQuestionIndex, sessionActive, sessionCompleted, showBreathingReset]);
+    // Start STT Immediately in the Click Handler to satisfy Chrome User Gesture constraints
+    if (recognitionRef.current) {
+      try {
+        startTimeRef.current = Date.now();
+        recognitionRef.current.start();
+      } catch (e) {
+        console.error("Failed to start STT:", e);
+      }
+    }
+  };
 
   // Real ML Backend Stress Detection Engine & Face Tracking Loop
   useEffect(() => {
@@ -206,12 +200,6 @@ export default function SessionPage() {
         };
 
         mediaRecorder.start(2000); // 2-second chunks
-        
-        // Start Speech Recognition
-        if (recognitionRef.current) {
-          startTimeRef.current = Date.now();
-          recognitionRef.current.start();
-        }
 
         // Start Face Tracking
         if (modelsLoaded && webcamRef.current?.video) {
@@ -238,7 +226,6 @@ export default function SessionPage() {
     return () => {
       if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
       if (stream) stream.getTracks().forEach(track => track.stop());
-      if (recognitionRef.current) recognitionRef.current.stop();
       if (faceInterval) clearInterval(faceInterval);
     };
   }, [isRecording, showBreathingReset, modelsLoaded, logExpression]);
@@ -252,6 +239,10 @@ export default function SessionPage() {
 
   const handleNextQuestion = () => {
     setIsRecording(false);
+    setHasStartedQuestion(false);
+    if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch(e){}
+    }
     
     // Save data to store
     if (currentQuestion) {
@@ -266,7 +257,7 @@ export default function SessionPage() {
       nextQuestion();
     } else {
       endSession();
-      saveInterviewToHistory(85); // Pass a calculated score or mock score (e.g. 85)
+      saveInterviewToHistory(85);
       setSessionCompleted(true);
       router.push("/debrief");
     }
@@ -275,7 +266,7 @@ export default function SessionPage() {
   const handleBreathingComplete = () => {
     setShowBreathingReset(false);
     setStressScore(40);
-    // Let the auto-start countdown trigger again automatically
+    handleStartRecording(); // auto-restart after breathing
   };
 
   if (!currentQuestion) return null;
@@ -292,7 +283,7 @@ export default function SessionPage() {
 
       {showBreathingReset && <BreathingReset onComplete={handleBreathingComplete} />}
 
-      <header className="p-6 flex justify-between items-center z-10 border-b border-slate-200 bg-white/60 backdrop-blur-md">
+      <header className="p-6 flex justify-between items-center z-10 border-b border-slate-200 bg-white/60 backdrop-blur-md shadow-sm">
         <Link href="/" className="flex items-center gap-2">
           <Shield className="w-6 h-6 text-indigo-500" />
           <span className="font-bold text-slate-800">InterviewShield V3.0</span>
@@ -319,112 +310,129 @@ export default function SessionPage() {
           </div>
 
           {/* Webcam & Live Transcript */}
-          <div className="flex-1 rounded-2xl border border-slate-200 relative overflow-hidden bg-slate-900 shadow-md flex flex-col">
+          <div className="flex-1 min-h-[400px] rounded-2xl border border-slate-200 relative overflow-hidden bg-slate-900 shadow-xl flex flex-col">
             <div className="relative flex-1">
               {!modelsLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-white z-20">
-                  <p className="animate-pulse font-bold text-lg">Loading AI Models...</p>
+                  <p className="animate-pulse font-mono text-sm tracking-widest text-indigo-400">LOADING_AI_MODELS...</p>
                 </div>
               )}
               
-              {/* 3-2-1 Auto Start Overlay */}
-              {countdown > 0 && modelsLoaded && !showBreathingReset && (
-                <div className="absolute inset-0 bg-indigo-900/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center">
-                  <span className="text-white text-2xl font-bold mb-4">Auto-Recording Starts In...</span>
-                  <span className="text-white text-9xl font-black animate-pulse drop-shadow-2xl">{countdown}</span>
+              {/* CLICK TO START OVERLAY (Fixes Chrome User Gesture Block) */}
+              {!hasStartedQuestion && modelsLoaded && !showBreathingReset && (
+                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md z-30 flex flex-col items-center justify-center">
+                  <button 
+                    onClick={handleStartRecording}
+                    className="group relative flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-5 rounded-2xl font-bold transition-all shadow-2xl shadow-indigo-500/30 hover:scale-105 active:scale-95 border border-indigo-400/50"
+                  >
+                    <div className="absolute inset-0 rounded-2xl border-2 border-indigo-400/30 animate-ping" />
+                    <Play className="w-6 h-6 fill-current" />
+                    <span className="text-lg tracking-wide">START ANSWERING</span>
+                  </button>
+                  <p className="text-indigo-200/60 font-mono text-xs mt-6 uppercase tracking-widest">Click to initialize microphone & AI</p>
                 </div>
               )}
 
               <Webcam 
                 ref={webcamRef}
                 audio={false}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover opacity-90"
                 mirrored={true}
               />
               
               {/* Feedback Toast */}
               {feedbackToast && (
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-6 py-2 rounded-full shadow-lg border border-orange-200 text-orange-600 font-bold text-sm flex items-center gap-2 transition-all z-10">
-                  ⚠️ {feedbackToast}
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-lg border border-indigo-500/50 text-indigo-300 font-mono text-xs tracking-wider flex items-center gap-2 transition-all z-10 shadow-xl">
+                  <Terminal className="w-3 h-3 text-indigo-400" />
+                  {feedbackToast}
                 </div>
               )}
 
               {/* Expression Badge */}
-              <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-semibold border border-white/20 capitalize z-10">
-                Expression: {currentExpression}
+              <div className="absolute top-6 right-6 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-slate-300 font-mono text-[10px] tracking-widest border border-slate-700 uppercase z-10 flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${currentExpression === 'neutral' ? 'bg-blue-400' : 'bg-emerald-400'} animate-pulse`} />
+                EXP: {currentExpression}
               </div>
             </div>
 
             {/* Live Transcript Subtitles */}
-            <div className="h-28 bg-black/80 p-6 border-t border-white/10 overflow-y-auto flex flex-col justify-end">
-              <p className={`text-lg italic font-medium leading-relaxed ${isRecording ? 'text-white' : 'text-slate-400'}`}>
-                {liveTranscript || (isRecording ? "Listening to your answer..." : "Recording paused.")}
+            <div className="h-32 bg-slate-950 p-6 border-t border-slate-800 overflow-y-auto flex flex-col justify-end">
+              <p className={`font-mono text-sm leading-relaxed ${isRecording ? 'text-indigo-100' : 'text-slate-600'}`}>
+                <span className="text-indigo-500 mr-2">{">"}</span>
+                {liveTranscript || (isRecording ? "Listening to your answer..." : "System idle.")}
+                {isRecording && <span className="inline-block w-2 h-4 bg-indigo-500 ml-1 animate-pulse" />}
               </p>
             </div>
 
             {/* Recording Indicator */}
-            {isRecording && countdown === 0 && (
-              <div className="absolute top-6 left-6 flex items-center gap-2 bg-red-500/90 backdrop-blur-md px-4 py-2 rounded-full border border-red-400 shadow-2xl z-10">
-                <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
-                <span className="text-white font-bold text-xs tracking-widest uppercase">Recording</span>
+            {isRecording && (
+              <div className="absolute top-6 left-6 flex items-center gap-2 bg-rose-500/10 backdrop-blur-md px-3 py-1.5 rounded-lg border border-rose-500/30 z-10">
+                <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div>
+                <span className="text-rose-400 font-mono text-[10px] tracking-widest uppercase">REC_ACTIVE</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Panel: Dashboards & Controls */}
+        {/* Right Panel: Sleek Dark Mode Telemetry Dashboard */}
         <div className="w-full md:w-[380px] flex flex-col gap-6">
           <StressRadar score={stressScore} isActive={isRecording} />
           
-          {/* Live Coaching Dashboard */}
-          <div className="glass-card bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col gap-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-lg text-slate-800">Live AI Analytics</h3>
-              <div className="px-2 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-md">Real-time</div>
+          <div className="bg-slate-900 rounded-2xl p-6 shadow-2xl flex flex-col gap-6 text-slate-200 border border-slate-800 relative overflow-hidden">
+            {/* Subtle glow effect */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3 z-10">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-indigo-400" />
+                <h3 className="font-bold text-sm tracking-widest uppercase text-white">AI Telemetry</h3>
+              </div>
+              <div className="flex items-center gap-2 bg-slate-950 px-2 py-1 rounded border border-slate-800">
+                <div className={`w-1.5 h-1.5 rounded-full ${isRecording ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
+                <span className="text-[10px] font-mono text-slate-400 tracking-wider">LINK</span>
+              </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center justify-center text-center">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pacing (WPM)</span>
-                <span className={`text-3xl font-black ${liveWpm > 160 ? 'text-orange-500' : liveWpm > 0 ? 'text-emerald-500' : 'text-slate-700'}`}>
+            <div className="grid grid-cols-2 gap-4 z-10">
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/50 flex flex-col justify-center">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Pacing_WPM</span>
+                <span className={`text-4xl font-mono ${liveWpm > 160 ? 'text-rose-400' : liveWpm > 0 ? 'text-emerald-400' : 'text-slate-200'}`}>
                   {liveWpm}
                 </span>
               </div>
               
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center justify-center text-center">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Filler Words</span>
-                <span className={`text-3xl font-black ${fillerCount > 5 ? 'text-red-500' : fillerCount > 0 ? 'text-orange-500' : 'text-emerald-500'}`}>
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/50 flex flex-col justify-center">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Filler_Hits</span>
+                <span className={`text-4xl font-mono ${fillerCount > 5 ? 'text-rose-500' : fillerCount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
                   {fillerCount}
                 </span>
               </div>
             </div>
 
-            <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-1">Detected Emotion</span>
-                <span className="text-lg font-bold text-indigo-900 capitalize">{currentExpression}</span>
-              </div>
-              <div className="text-3xl">
-                {currentExpression === 'happy' ? '😊' : currentExpression === 'sad' ? '😢' : currentExpression === 'angry' ? '😠' : currentExpression === 'fearful' ? '😨' : currentExpression === 'surprised' ? '😲' : '😐'}
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/50 z-10">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-3">Expression_State</span>
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-mono text-white uppercase tracking-wider">{currentExpression}</span>
+                <div className={`w-3 h-3 rounded-full shadow-[0_0_12px_currentColor] ${currentExpression === 'happy' ? 'bg-emerald-400 text-emerald-400' : currentExpression === 'fearful' || currentExpression === 'sad' ? 'bg-rose-400 text-rose-400' : 'bg-indigo-400 text-indigo-400'}`} />
               </div>
             </div>
 
-            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
-              <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider block mb-1">AI Coach Status</span>
-              <p className="text-sm text-emerald-800 font-medium">
-                {countdown > 0 ? "Preparing to listen..." : isRecording ? (feedbackToast || "You're doing great. Keep a steady pace.") : "Ready to analyze your answer."}
+            <div className="bg-indigo-950/30 p-4 rounded-xl border border-indigo-900/50 z-10">
+              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block mb-2">Coach_Terminal</span>
+              <p className="text-xs text-indigo-200 font-mono leading-relaxed">
+                {!hasStartedQuestion ? "> WAITING FOR START SIGNAL..." : (feedbackToast ? `> ${feedbackToast}` : "> SYSTEM NOMINAL. CONTINUING ANALYSIS...")}
               </p>
             </div>
 
             <button 
               onClick={handleNextQuestion}
-              disabled={countdown > 0}
-              className={`mt-2 w-full py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md ${countdown > 0 ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20 hover:shadow-lg active:scale-95'}`}
+              disabled={!hasStartedQuestion}
+              className={`mt-2 w-full py-4 font-bold rounded-xl flex items-center justify-center gap-2 transition-all border z-10 tracking-widest uppercase text-sm ${!hasStartedQuestion ? 'bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 border-indigo-500 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 active:scale-95'}`}
             >
               {currentQuestionIndex < questions.length - 1 ? (
-                <>Next Question <Play className="w-4 h-4 fill-current" /></>
+                <>Next_Question <Play className="w-4 h-4 fill-current" /></>
               ) : (
-                <>End Session & Generate PDF</>
+                <>End_Session // Generate_Report</>
               )}
             </button>
           </div>
