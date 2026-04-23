@@ -115,20 +115,6 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Floating element */}
-            <motion.div 
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-6 -left-6 bg-white/90 backdrop-blur-md rounded-xl p-4 shadow-xl shadow-slate-200/50 border border-slate-100 flex items-center gap-4"
-            >
-              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                <Mic className="w-5 h-5 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-800">Filler Word Detected</p>
-                <p className="text-xs font-medium text-slate-500">You said "um". Try to pause instead.</p>
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </div>

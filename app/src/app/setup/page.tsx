@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Shield, ChevronRight, Mic, CheckCircle2, Server } from "lucide-react";
@@ -15,6 +15,12 @@ export default function SetupPage() {
   const [level, setLevel] = useState("Mid-Level");
   const [micStatus, setMicStatus] = useState<"idle" | "testing" | "ready">("idle");
   const [backendStatus, setBackendStatus] = useState<"idle" | "connecting" | "ready">("idle");
+
+  useEffect(() => {
+    if (step === 2 && backendStatus === "idle") {
+      checkBackend();
+    }
+  }, [step, backendStatus]);
 
   const roles = ["Software Engineer", "Product Manager", "Data Analyst", "Marketing", "Sales"];
   const levels = ["Entry Level", "Mid-Level", "Senior", "Lead"];
@@ -185,18 +191,9 @@ export default function SetupPage() {
                     {backendStatus === 'idle' ? 'AI Engine Sleeping' : backendStatus === 'connecting' ? 'Waking Render Server...' : 'Engine Connected'}
                   </h3>
                   <p className="text-sm text-slate-500 px-4">
-                    {backendStatus === 'idle' ? 'Click to wake the Python ML engine.' : backendStatus === 'connecting' ? 'This takes ~30s on free tier.' : 'Server is active and ready.'}
+                    {backendStatus === 'idle' ? 'Waking up the Python ML engine automatically.' : backendStatus === 'connecting' ? 'This takes ~30s on free tier.' : 'Server is active and ready.'}
                   </p>
                 </div>
-
-                {backendStatus === 'idle' && (
-                  <button 
-                    onClick={checkBackend}
-                    className="bg-orange-50 hover:bg-orange-100 text-orange-700 px-6 py-2 rounded-lg font-bold border border-orange-200 transition-colors"
-                  >
-                    Wake Up AI Engine
-                  </button>
-                )}
               </div>
             </div>
 
