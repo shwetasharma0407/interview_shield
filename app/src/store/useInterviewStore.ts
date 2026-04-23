@@ -39,7 +39,7 @@ interface InterviewState {
   logExpression: (expression: string) => void;
 }
 
-export const useInterviewStore = create<InterviewState>((set) => ({
+export const useInterviewStore = create<InterviewState>((set, get) => ({
   role: "",
   level: "",
   questions: [],
@@ -56,6 +56,7 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   },
 
   startSession: () => {
+    const { role, level } = get();
     // Generate simulated questions based on level
     const mockQuestions: Question[] = [
       {
