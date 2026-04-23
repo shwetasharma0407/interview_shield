@@ -335,26 +335,48 @@ export default function SessionPage() {
           <StressRadar score={stressScore} isActive={isRecording} />
           
           {/* Live Coaching Dashboard */}
-          <div className="glass-card bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
-            <h3 className="font-bold text-lg text-slate-800 border-b border-slate-100 pb-2">Live Speech Analytics</h3>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-slate-500">Pacing (WPM)</span>
-              <span className={`text-lg font-bold ${liveWpm > 160 ? 'text-orange-500' : liveWpm > 0 ? 'text-emerald-500' : 'text-slate-400'}`}>
-                {liveWpm}
-              </span>
+          <div className="glass-card bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-lg text-slate-800">Live AI Analytics</h3>
+              <div className="px-2 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-md">Real-time</div>
             </div>
             
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-slate-500">Filler Words</span>
-              <span className={`text-lg font-bold ${fillerCount > 5 ? 'text-red-500' : fillerCount > 0 ? 'text-orange-500' : 'text-emerald-500'}`}>
-                {fillerCount}
-              </span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center justify-center text-center">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pacing (WPM)</span>
+                <span className={`text-3xl font-black ${liveWpm > 160 ? 'text-orange-500' : liveWpm > 0 ? 'text-emerald-500' : 'text-slate-700'}`}>
+                  {liveWpm}
+                </span>
+              </div>
+              
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col items-center justify-center text-center">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Filler Words</span>
+                <span className={`text-3xl font-black ${fillerCount > 5 ? 'text-red-500' : fillerCount > 0 ? 'text-orange-500' : 'text-emerald-500'}`}>
+                  {fillerCount}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-1">Detected Emotion</span>
+                <span className="text-lg font-bold text-indigo-900 capitalize">{currentExpression}</span>
+              </div>
+              <div className="text-3xl">
+                {currentExpression === 'happy' ? '😊' : currentExpression === 'sad' ? '😢' : currentExpression === 'angry' ? '😠' : currentExpression === 'fearful' ? '😨' : currentExpression === 'surprised' ? '😲' : '😐'}
+              </div>
+            </div>
+
+            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+              <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider block mb-1">AI Coach Status</span>
+              <p className="text-sm text-emerald-800 font-medium">
+                {isRecording ? (feedbackToast || "You're doing great. Keep a steady pace.") : "Ready to analyze your answer."}
+              </p>
             </div>
 
             <button 
               onClick={handleNextQuestion}
-              className="mt-4 w-full py-4 bg-indigo-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-500/20"
+              className="mt-2 w-full py-4 bg-indigo-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg active:scale-95"
             >
               {currentQuestionIndex < questions.length - 1 ? (
                 <>Next Question <Play className="w-4 h-4 fill-current" /></>
