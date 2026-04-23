@@ -20,12 +20,13 @@ declare global {
 
 export default function SessionPage() {
   const router = useRouter();
-  const { role, questions, currentQuestionIndex, nextQuestion, sessionActive, endSession, updateTranscript, updateMetrics, logExpression } = useInterviewStore();
+  const { role, questions, currentQuestionIndex, nextQuestion, sessionActive, endSession, updateTranscript, updateMetrics, logExpression, saveInterviewToHistory } = useInterviewStore();
   
   const [isRecording, setIsRecording] = useState(false);
   const [stressScore, setStressScore] = useState(25);
   const [showBreathingReset, setShowBreathingReset] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   
   // V2.0 State
   const [liveTranscript, setLiveTranscript] = useState("");
@@ -114,6 +115,34 @@ export default function SessionPage() {
       }
     }
   }, []);
+
+  // Handle 3-2-1 Auto Start Countdown
+  useEffect(() => {
+    if (!sessionActive || sessionCompleted || showBreathingReset) return;
+    
+    setCountdown(3);
+    setIsRecording(false);
+    
+    // Clear previous transcript states
+    setLiveTranscript("");
+    setLiveWpm(0);
+    setFillerCount(0);
+    setFeedbackToast("");
+    wordCountRef.current = 0;
+    
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsRecording(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [currentQuestionIndex, sessionActive, sessionCompleted, showBreathingReset]);
 
   // Real ML Backend Stress Detection Engine & Face Tracking Loop
   useEffect(() => {
@@ -204,17 +233,6 @@ export default function SessionPage() {
     }
   }, [sessionActive, sessionCompleted, router]);
 
-  const toggleRecording = () => {
-    if (!isRecording) {
-      setLiveTranscript("");
-      setLiveWpm(0);
-      setFillerCount(0);
-      wordCountRef.current = 0;
-      setFeedbackToast("");
-    }
-    setIsRecording(!isRecording);
-  };
-
   const handleNextQuestion = () => {
     setIsRecording(false);
     
@@ -231,6 +249,7 @@ export default function SessionPage() {
       nextQuestion();
     } else {
       endSession();
+      saveInterviewToHistory(85); // Pass a calculated score or mock score (e.g. 85)
       setSessionCompleted(true);
       router.push("/debrief");
     }
@@ -239,7 +258,7 @@ export default function SessionPage() {
   const handleBreathingComplete = () => {
     setShowBreathingReset(false);
     setStressScore(40);
-    setIsRecording(true);
+    // Let the auto-start countdown trigger again automatically
   };
 
   if (!currentQuestion) return null;
@@ -259,7 +278,7 @@ export default function SessionPage() {
       <header className="p-6 flex justify-between items-center z-10 border-b border-slate-200 bg-white/60 backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2">
           <Shield className="w-6 h-6 text-indigo-500" />
-          <span className="font-bold text-slate-800">InterviewShield V2.0</span>
+          <span className="font-bold text-slate-800">InterviewShield V3.0</span>
         </Link>
         <div className="flex items-center gap-4">
           <span className="text-sm text-slate-500">Target Role: <span className="text-slate-800 font-medium">{role}</span></span>
@@ -287,9 +306,18 @@ export default function SessionPage() {
             <div className="relative flex-1">
               {!modelsLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-white z-20">
-                  <p className="animate-pulse">Loading AI Models...</p>
+                  <p className="animate-pulse font-bold text-lg">Loading AI Models...</p>
                 </div>
               )}
+              
+              {/* 3-2-1 Auto Start Overlay */}
+              {countdown > 0 && modelsLoaded && !showBreathingReset && (
+                <div className="absolute inset-0 bg-indigo-900/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center">
+                  <span className="text-white text-2xl font-bold mb-4">Auto-Recording Starts In...</span>
+                  <span className="text-white text-9xl font-black animate-pulse drop-shadow-2xl">{countdown}</span>
+                </div>
+              )}
+
               <Webcam 
                 ref={webcamRef}
                 audio={false}
@@ -299,34 +327,31 @@ export default function SessionPage() {
               
               {/* Feedback Toast */}
               {feedbackToast && (
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-6 py-2 rounded-full shadow-lg border border-orange-200 text-orange-600 font-bold text-sm flex items-center gap-2 transition-all">
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-6 py-2 rounded-full shadow-lg border border-orange-200 text-orange-600 font-bold text-sm flex items-center gap-2 transition-all z-10">
                   ⚠️ {feedbackToast}
                 </div>
               )}
 
               {/* Expression Badge */}
-              <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-semibold border border-white/20 capitalize">
+              <div className="absolute top-6 right-6 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-semibold border border-white/20 capitalize z-10">
                 Expression: {currentExpression}
               </div>
             </div>
 
             {/* Live Transcript Subtitles */}
-            <div className="h-24 bg-black/80 p-4 border-t border-white/10 overflow-y-auto">
-              <p className="text-sm text-slate-300 italic">
-                {liveTranscript || (isRecording ? "Listening..." : "Recording paused.")}
+            <div className="h-28 bg-black/80 p-6 border-t border-white/10 overflow-y-auto flex flex-col justify-end">
+              <p className={`text-lg italic font-medium leading-relaxed ${isRecording ? 'text-white' : 'text-slate-400'}`}>
+                {liveTranscript || (isRecording ? "Listening to your answer..." : "Recording paused.")}
               </p>
             </div>
 
-            {/* Recording Controls Overlay */}
-            <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 shadow-2xl">
-              <button 
-                onClick={toggleRecording}
-                disabled={!modelsLoaded}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${!modelsLoaded ? 'opacity-50 cursor-not-allowed bg-gray-500' : isRecording ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-500'}`}
-              >
-                {isRecording ? <Square className="w-5 h-5 fill-current" /> : <Mic className="w-5 h-5" />}
-              </button>
-            </div>
+            {/* Recording Indicator */}
+            {isRecording && countdown === 0 && (
+              <div className="absolute top-6 left-6 flex items-center gap-2 bg-red-500/90 backdrop-blur-md px-4 py-2 rounded-full border border-red-400 shadow-2xl z-10">
+                <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                <span className="text-white font-bold text-xs tracking-widest uppercase">Recording</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -370,13 +395,14 @@ export default function SessionPage() {
             <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
               <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider block mb-1">AI Coach Status</span>
               <p className="text-sm text-emerald-800 font-medium">
-                {isRecording ? (feedbackToast || "You're doing great. Keep a steady pace.") : "Ready to analyze your answer."}
+                {countdown > 0 ? "Preparing to listen..." : isRecording ? (feedbackToast || "You're doing great. Keep a steady pace.") : "Ready to analyze your answer."}
               </p>
             </div>
 
             <button 
               onClick={handleNextQuestion}
-              className="mt-2 w-full py-4 bg-indigo-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg active:scale-95"
+              disabled={countdown > 0}
+              className={`mt-2 w-full py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md ${countdown > 0 ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20 hover:shadow-lg active:scale-95'}`}
             >
               {currentQuestionIndex < questions.length - 1 ? (
                 <>Next Question <Play className="w-4 h-4 fill-current" /></>

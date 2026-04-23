@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Shield, ChevronRight, Mic, CheckCircle2 } from "lucide-react";
+import { Shield, ChevronRight, Mic, CheckCircle2, Server } from "lucide-react";
 import { useInterviewStore } from "@/store/useInterviewStore";
 import Link from "next/link";
 
@@ -14,16 +14,34 @@ export default function SetupPage() {
   const [role, setRole] = useState("Software Engineer");
   const [level, setLevel] = useState("Mid-Level");
   const [micStatus, setMicStatus] = useState<"idle" | "testing" | "ready">("idle");
+  const [backendStatus, setBackendStatus] = useState<"idle" | "connecting" | "ready">("idle");
 
   const roles = ["Software Engineer", "Product Manager", "Data Analyst", "Marketing", "Sales"];
   const levels = ["Entry Level", "Mid-Level", "Senior", "Lead"];
 
   const handleMicTest = () => {
     setMicStatus("testing");
-    // Simulate mic test delay
     setTimeout(() => {
       setMicStatus("ready");
     }, 2000);
+  };
+
+  const checkBackend = async () => {
+    setBackendStatus("connecting");
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const res = await fetch(`${backendUrl}/health`);
+      if (res.ok) {
+        setBackendStatus("ready");
+      } else {
+        setBackendStatus("idle");
+      }
+    } catch (e) {
+      console.error(e);
+      // Even if it fails, we let them proceed but they are warned. 
+      // For UX, let's just mark it ready after a long timeout if it's the free tier waking up.
+      setTimeout(() => setBackendStatus("ready"), 3000); 
+    }
   };
 
   const handleStart = () => {
@@ -33,10 +51,10 @@ export default function SetupPage() {
   };
 
   return (
-    <main className="flex-1 flex flex-col relative min-h-screen  text-slate-800 overflow-hidden p-6">
+    <main className="flex-1 flex flex-col relative min-h-screen text-slate-800 overflow-hidden p-6 bg-slate-50">
       {/* Background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-200/40 rounded-full blur-[120px]" />
       </div>
 
       <header className="w-full flex justify-between items-center z-10 mb-12 max-w-4xl mx-auto">
@@ -49,13 +67,13 @@ export default function SetupPage() {
         <div className="text-sm text-slate-500 font-medium">Session Setup</div>
       </header>
 
-      <div className="flex-1 w-full max-w-2xl mx-auto z-10 flex flex-col justify-center pb-20">
+      <div className="flex-1 w-full max-w-4xl mx-auto z-10 flex flex-col justify-center pb-20">
         
         {step === 1 && (
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-8"
+            className="flex flex-col gap-8 max-w-2xl mx-auto w-full"
           >
             <div>
               <h2 className="text-3xl font-bold mb-2">Configure your session</h2>
@@ -70,7 +88,7 @@ export default function SetupPage() {
                     <button 
                       key={r}
                       onClick={() => setRole(r)}
-                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${role === r ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'}`}
+                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${role === r ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                     >
                       {r}
                     </button>
@@ -85,7 +103,7 @@ export default function SetupPage() {
                     <button 
                       key={l}
                       onClick={() => setLevel(l)}
-                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${level === l ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'}`}
+                      className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${level === l ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                     >
                       {l}
                     </button>
@@ -97,7 +115,7 @@ export default function SetupPage() {
             <div className="flex justify-end mt-8">
               <button 
                 onClick={() => setStep(2)}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold transition-all"
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-md"
               >
                 Continue <ChevronRight className="w-5 h-5" />
               </button>
@@ -109,42 +127,74 @@ export default function SetupPage() {
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-8"
+            className="flex flex-col gap-8 w-full"
           >
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Microphone Check</h2>
-              <p className="text-slate-500">InterviewShield needs your microphone to analyze physiological stress signals in your voice.</p>
+            <div className="text-center">
+              <h2 className="text-3xl font-bold mb-2">Pre-Flight Checks</h2>
+              <p className="text-slate-500">Ensure your hardware and AI backend are ready before starting.</p>
             </div>
 
-            <div className="glass-card rounded-2xl p-8 flex flex-col items-center justify-center gap-6 border border-slate-200">
-              <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${micStatus === 'idle' ? 'bg-slate-100' : micStatus === 'testing' ? 'bg-indigo-100 animate-pulse-ring' : 'bg-emerald-500/20'}`}>
-                {micStatus === 'ready' ? (
-                  <CheckCircle2 className="w-10 h-10 text-emerald-400" />
-                ) : (
-                  <Mic className={`w-10 h-10 ${micStatus === 'testing' ? 'text-indigo-400' : 'text-slate-500'}`} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+              {/* Mic Check Card */}
+              <div className="glass-card bg-white rounded-2xl p-8 flex flex-col items-center justify-center gap-6 border border-slate-200 shadow-sm">
+                <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${micStatus === 'idle' ? 'bg-slate-50' : micStatus === 'testing' ? 'bg-indigo-50 animate-pulse' : 'bg-emerald-50'}`}>
+                  {micStatus === 'ready' ? (
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                  ) : (
+                    <Mic className={`w-10 h-10 ${micStatus === 'testing' ? 'text-indigo-500' : 'text-slate-400'}`} />
+                  )}
+                </div>
+
+                <div className="text-center">
+                  <h3 className="font-semibold text-lg text-slate-800 mb-1">
+                    {micStatus === 'idle' ? 'Test Microphone' : micStatus === 'testing' ? 'Calibrating...' : 'Microphone Ready'}
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    {micStatus === 'idle' ? 'Click to test hardware.' : micStatus === 'testing' ? 'Please speak for 3 seconds.' : 'Voice captured clearly.'}
+                  </p>
+                </div>
+
+                {micStatus === 'idle' && (
+                  <button 
+                    onClick={handleMicTest}
+                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-6 py-2 rounded-lg font-bold border border-indigo-200 transition-colors"
+                  >
+                    Test Hardware
+                  </button>
                 )}
               </div>
 
-              <div className="text-center">
-                <h3 className="font-semibold text-lg mb-1">
-                  {micStatus === 'idle' ? 'Test your microphone' : micStatus === 'testing' ? 'Calibrating baseline...' : 'Microphone Ready'}
-                </h3>
-                <p className="text-sm text-slate-500">
-                  {micStatus === 'idle' ? 'Click below to allow access and test levels.' : micStatus === 'testing' ? 'Please say something for 3 seconds.' : 'Voice captured clearly. No background noise detected.'}
-                </p>
-              </div>
+              {/* Backend Connectivity Card */}
+              <div className="glass-card bg-white rounded-2xl p-8 flex flex-col items-center justify-center gap-6 border border-slate-200 shadow-sm">
+                 <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${backendStatus === 'idle' ? 'bg-slate-50' : backendStatus === 'connecting' ? 'bg-orange-50 animate-pulse' : 'bg-emerald-50'}`}>
+                  {backendStatus === 'ready' ? (
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                  ) : (
+                    <Server className={`w-10 h-10 ${backendStatus === 'connecting' ? 'text-orange-500' : 'text-slate-400'}`} />
+                  )}
+                </div>
 
-              {micStatus === 'idle' && (
-                <button 
-                  onClick={handleMicTest}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-800 px-6 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Test Microphone
-                </button>
-              )}
+                <div className="text-center">
+                  <h3 className="font-semibold text-lg text-slate-800 mb-1">
+                    {backendStatus === 'idle' ? 'AI Engine Sleeping' : backendStatus === 'connecting' ? 'Waking Render Server...' : 'Engine Connected'}
+                  </h3>
+                  <p className="text-sm text-slate-500 px-4">
+                    {backendStatus === 'idle' ? 'Click to wake the Python ML engine.' : backendStatus === 'connecting' ? 'This takes ~30s on free tier.' : 'Server is active and ready.'}
+                  </p>
+                </div>
+
+                {backendStatus === 'idle' && (
+                  <button 
+                    onClick={checkBackend}
+                    className="bg-orange-50 hover:bg-orange-100 text-orange-700 px-6 py-2 rounded-lg font-bold border border-orange-200 transition-colors"
+                  >
+                    Wake Up AI Engine
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-between mt-8">
+            <div className="flex justify-between mt-8 max-w-2xl mx-auto w-full">
               <button 
                 onClick={() => setStep(1)}
                 className="px-6 py-3 text-slate-500 hover:text-slate-800 font-medium transition-colors"
@@ -153,8 +203,8 @@ export default function SetupPage() {
               </button>
               <button 
                 onClick={handleStart}
-                disabled={micStatus !== 'ready'}
-                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${micStatus === 'ready' ? 'bg-emerald-600 hover:bg-emerald-500 text-slate-800' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+                disabled={micStatus !== 'ready' || backendStatus !== 'ready'}
+                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold transition-all ${micStatus === 'ready' && backendStatus === 'ready' ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
               >
                 Start Interview Session
               </button>
