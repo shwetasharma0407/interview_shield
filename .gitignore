@@ -1,0 +1,16 @@
+# Node
+node_modules/
+.next/
+out/
+build/
+.env.local
+
+# Python
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+
+# Dataset (Do not upload 200MB dataset to Github)
+backend/ravdess_speech.zip
+backend/ravdess_audio/
+DATASET.json
